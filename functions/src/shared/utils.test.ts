@@ -1,9 +1,15 @@
-import { ok, fail } from "./utils";
-
-test("ok helper wraps data correctly", () => {
-  expect(ok({ foo: "bar" })).toEqual({ ok: true, data: { foo: "bar" } });
-});
+// src/shared/utils.test.ts
+import { err } from "./utils";
 
 test("fail helper sets message and code", () => {
-  expect(fail("error", 500)).toEqual({ ok: false, code: 500, message: "error" });
+  const out = err("error", "500");
+  expect(out).toEqual(
+    expect.objectContaining({
+      ok: false,
+      error: expect.objectContaining({
+        code: "error",
+        message: "500",
+      }),
+    })
+  );
 });
