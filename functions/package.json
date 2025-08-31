@@ -9,6 +9,8 @@
     "start": "npm run shell",
     "deploy": "firebase deploy --only functions",
     "test": "jest --passWithNoTests",
+    "test:watch": "jest --watch",
+    "test:ci": "jest --runInBand",
     "logs": "firebase functions:log"
   },
   "engines": {
@@ -16,6 +18,8 @@
   },
   "main": "lib/index.js",
   "dependencies": {
+    "ajv": "^8.17.1",
+    "ajv-formats": "^2.1.1",
     "cors": "^2.8.5",
     "firebase-admin": "^12.7.0",
     "firebase-functions": "^6.4.0",

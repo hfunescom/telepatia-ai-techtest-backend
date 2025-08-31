@@ -2,6 +2,8 @@
 set -e
 #Project build
 cd functions
+#Load env variables
+export $(cat .env | xargs)
 #Project build
 npm run build
 #Start firebase emulators
