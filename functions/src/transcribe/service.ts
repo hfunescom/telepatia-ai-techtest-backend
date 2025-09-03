@@ -27,7 +27,7 @@ export type TranscribeInput =
     };
 
 /** Salida del servicio */
-export type TranscribeResult = { text: string; correlationId?: string };
+export type TranscribeResult = { text: string; language: string, correlationId?: string };
 
 /** Servicio puro reutilizable por handler HTTP y por el pipeline */
 export async function transcribeService(input: TranscribeInput): Promise<TranscribeResult> {
@@ -78,6 +78,7 @@ export async function transcribeService(input: TranscribeInput): Promise<Transcr
 
   return {
     text: out.text,
+    language: language || "es",
     correlationId: input.correlationId,
   };
 }

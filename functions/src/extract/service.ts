@@ -6,8 +6,8 @@ import OpenAI from "openai";
 /** ---------------- Types ---------------- */
 export interface ExtractionRequest {
   transcript: string;
-  language?: string; // e.g., "es-AR"
-  correlationId?: string;
+  language: string;       // <- ahora requerido
+  correlationId: string;  // <- ahora requerido
 }
 
 export interface ExtractionResponseData {
@@ -28,10 +28,10 @@ const requestSchema: JSONSchemaType<ExtractionRequest> = {
   type: "object",
   properties: {
     transcript: { type: "string", minLength: 1 },
-    language: { type: "string", nullable: true, optional: true },
-    correlationId: { type: "string", nullable: true, optional: true },
+    language: { type: "string" },
+    correlationId: { type: "string" },
   },
-  required: ["transcript"],
+  required: ["transcript", "language", "correlationId"], // <- lo que pediste
   additionalProperties: false,
 };
 
@@ -52,13 +52,13 @@ const dataSchema = {
     symptoms: {
       type: "array",
       items: { type: "string" },
-      default: [],
+      default: [], // <- usaremos useDefaults para que se aplique
     },
     onsetDays: { type: "integer", minimum: 0 },
     riskFlags: {
       type: "array",
       items: { type: "string" },
-      default: [],
+      default: [], // <- idem
     },
     notes: { type: "string" },
   },
@@ -67,11 +67,49 @@ const dataSchema = {
 } as const;
 
 /** --------------- Validators --------------- */
-// 👇 cambio: coerceTypes para que "2" -> 2 y similares
-const ajv = new Ajv({ allErrors: true, strict: false, coerceTypes: true });
+// Más tolerante: defaults + quitar props extra del LLM + coerción
+const ajv = new Ajv({
+  allErrors: true,
+  strict: false,
+  coerceTypes: true,
+  useDefaults: true,            // aplica defaults de schema
+  removeAdditional: "all",      // borra props no declaradas
+});
 addFormats(ajv);
 const validateRequest = ajv.compile(requestSchema);
 const validateData = ajv.compile(dataSchema as any);
+
+/** --------------- Normalización de salida del LLM --------------- */
+// Acepta variaciones típicas del LLM (claves en ES, alias, etc.)
+function normalizeExtractionData(raw: any): any {
+  if (raw == null || typeof raw !== "object") return raw;
+
+  const out: any = { ...raw };
+
+  // Mapear claves en español/comunes a las del schema
+  if (out.sintomas && !out.symptoms) out.symptoms = out.sintomas;
+  if (out.riesgos && !out.riskFlags) out.riskFlags = out.riesgos;
+  if (out.observaciones && !out.notes) out.notes = out.observaciones;
+
+  if (out.paciente && !out.patient) out.patient = out.paciente;
+
+  if (out.patient && typeof out.patient === "object") {
+    const p = { ...out.patient };
+    if (p.genero && !p.sex) p.sex = p.genero;
+    if (p.sexo && !p.sex) p.sex = p.sexo;
+    if (typeof p.age === "string") {
+      const num = Number(p.age);
+      if (!Number.isNaN(num)) p.age = num;
+    }
+    out.patient = p;
+  }
+
+  // Asegurar arrays si vinieron como string/objeto accidentalmente
+  if (typeof out.symptoms === "string") out.symptoms = [out.symptoms];
+  if (typeof out.riskFlags === "string") out.riskFlags = [out.riskFlags];
+
+  return out;
+}
 
 /** --------------- LLM call + validation --------------- */
 async function extractWithLLM(
@@ -86,7 +124,8 @@ async function extractWithLLM(
   const system =
     "Eres un asistente de extracción clínica. Extrae SOLO los campos solicitados. " +
     "No inventes datos. Si algo no está, omítelo. Devuelve JSON válido que cumpla con el schema. " +
-    "Responde en el idioma del paciente si hace falta, pero mantiene claves en inglés del schema.";
+    "Usa claves EXACTAS del schema en inglés (patient, symptoms, onsetDays, riskFlags, notes, sex, age). " +
+    "No envíes texto fuera del JSON.";
 
   const user =
     `Texto clínico (lang=${language || "es-AR"}):\n\n${transcript}\n\n` +
@@ -119,12 +158,18 @@ async function extractWithLLM(
     throw new Error("LLM no devolvió JSON válido");
   }
 
-  if (!validateData(parsed)) {
-    throw new Error("LLM no cumple el schema de extracción");
+  // Normalizamos ANTES de validar (para aceptar variantes razonables)
+  const normalized = normalizeExtractionData(parsed);
+
+  if (!validateData(normalized)) {
+    // Arrojar errores visibles para debug rápido
+    const errs = JSON.stringify(validateData.errors ?? [], null, 2);
+    throw new Error(`LLM no cumple el schema de extracción: ${errs}`);
   }
 
-  const data = parsed as ExtractionResponseData;
-  // Normalizar defaults en arrays
+  const data = normalized as ExtractionResponseData;
+
+  // Defaults finales garantizados (por si el LLM no los puso)
   return {
     symptoms: [],
     riskFlags: [],
@@ -138,7 +183,10 @@ export async function extractService(
 ): Promise<ExtractionResponseData> {
   const ok = validateRequest(input);
   if (!ok) {
-    throw new Error("Bad request en extractService");
+    // si falla request, devolvemos explicación con detalles
+    throw new Error(
+      "Bad request en extractService: " + JSON.stringify(validateRequest.errors ?? [])
+    );
   }
 
   const { transcript, language } = input;
