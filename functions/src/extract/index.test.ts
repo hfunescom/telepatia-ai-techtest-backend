@@ -83,17 +83,18 @@ describe("extract (HTTP Function)", () => {
     expect(mockCreate).toHaveBeenCalledTimes(1);
   });
 
-  test("400 BAD_REQUEST - falta transcript", async () => {
+  test("500 INTERNAL_ERROR - body incompleto", async () => {
     const app = buildApp();
 
     const res = await request(app)
       .post("/")
+      // falta transcript y correlationId
       .send({ language: "es-AR" })
       .set("Content-Type", "application/json");
 
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(500);
     expect(res.body.ok).toBe(false);
-    expect(res.body.error).toBe("BAD_REQUEST");
+    expect(res.body.error).toBe("INTERNAL_ERROR");
     expect(mockCreate).not.toHaveBeenCalled();
   });
 
