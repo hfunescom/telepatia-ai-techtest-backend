@@ -112,6 +112,7 @@ describe("extract (HTTP Function)", () => {
       .post("/")
       .send({
         transcript: "Texto clínico...",
+        language: "es-AR",
         correlationId: "xyz-999"
       })
       .set("Content-Type", "application/json");

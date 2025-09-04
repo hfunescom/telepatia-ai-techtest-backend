@@ -5,9 +5,9 @@ import express, { Request, Response } from "express";
 import cors from "cors";
 import { z } from "zod";
 
-import { transcribeService, type TranscribeInput } from "../transcribe/service.js";
-import { extractService, type ExtractionResponseData } from "../extract/service.js";
-import { diagnoseService } from "../diagnose/service.js";
+import { transcribeService, type TranscribeInput } from "../transcribe/service";
+import { extractService, type ExtractionResponseData } from "../extract/service";
+import { diagnoseService } from "../diagnose/service";
 
 // -------- Secrets (para despliegue / emulador con .secret.local) --------
 const OPENAI_API_KEY = defineSecret("OPENAI_API_KEY");

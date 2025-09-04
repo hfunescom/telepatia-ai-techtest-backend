@@ -24,9 +24,16 @@ function buildJsonApp() {
 }
 
 describe("transcribe (contrato JSON + raw fallback)", () => {
+  const originalEnv = process.env;
+
   beforeEach(() => {
+    process.env = { ...originalEnv, OPENAI_API_KEY: "test" } as NodeJS.ProcessEnv;
     createMock.mockReset().mockResolvedValue({ text: "Texto (mock)" });
     fetchMock.mockReset();
+  });
+
+  afterAll(() => {
+    process.env = originalEnv;
   });
 
   // ---------- JSON inválido ----------
