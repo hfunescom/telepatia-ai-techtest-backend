@@ -4,13 +4,13 @@ const transcribeServiceMock = jest.fn();
 const extractServiceMock = jest.fn();
 const diagnoseServiceMock = jest.fn();
 
-jest.mock("../transcribe/service.js", () => ({
+jest.mock("../transcribe/service", () => ({
   transcribeService: transcribeServiceMock,
 }));
-jest.mock("../extract/service.js", () => ({
+jest.mock("../extract/service", () => ({
   extractService: extractServiceMock,
 }));
-jest.mock("../diagnose/service.js", () => ({
+jest.mock("../diagnose/service", () => ({
   diagnoseService: diagnoseServiceMock,
 }));
 
