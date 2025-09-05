@@ -1,8 +1,6 @@
-// ✨ Tipos
 import { z } from "zod";   
 import type { Request, Response } from "express";
 
-// Respuestas unificadas (sin cambios)
 export type OkResponse<T> = { ok: true; correlationId?: string; data: T; };
 export type ErrResponse = { ok: false; correlationId?: string; error: { code: string; message: string; details?: unknown } };
 export type ApiResponse<T> = OkResponse<T> | ErrResponse;
@@ -14,7 +12,6 @@ export function err(code: string, message: string, correlationId?: string, detai
   return { ok: false, correlationId, error: { code, message, details } };
 }
 
-// ✅ CORS/response helpers ahora devuelven void
 const CORS_ALLOW_ORIGIN = "*";
 
 export function writeJson(res: Response, status: number, body: unknown): void {
@@ -30,7 +27,7 @@ export function handleOptions(req: Request, res: Response): boolean {
     res.set("Access-Control-Allow-Headers", "Content-Type");
     res.set("Access-Control-Allow-Methods", "POST, OPTIONS");
     res.status(204).send("");
-    return true; // <- indicamos que ya respondimos
+    return true;
   }
   return false;
 }
@@ -39,9 +36,6 @@ export function getCorrelationId(req: Request): string | undefined {
   return (req.body && (req.body.correlationId as string)) || req.header("x-correlation-id") || undefined;
 }
 
-// Validador (igual)
-
-// ——— Validador genérico con Zod ———
 export function validate<T>(
   schema: z.ZodType<T>,
   data: unknown
@@ -51,7 +45,6 @@ export function validate<T>(
   return { error: parsed.error };
 }
 
-// ——— Wrapper de handler ———
 export function createHandler<I, O>(
   inputSchema: z.ZodType<I>,
   logic: (input: I, ctx: { correlationId?: string; req: Request }) => Promise<O> | O

@@ -1,10 +1,8 @@
-// functions/src/diagnose/index.ts
 import { onRequest } from "firebase-functions/v2/https";
 import express, { Request, Response } from "express";
 import cors from "cors";
 import { diagnoseService, DiagnoseRequestSchema } from "./service";
 
-// Handler HTTP (export nombrado)
 export async function diagnoseHandler(req: Request, res: Response) {
   try {
     const parsed = DiagnoseRequestSchema.safeParse(req.body);
@@ -28,7 +26,7 @@ export async function diagnoseHandler(req: Request, res: Response) {
   }
 }
 
-// Export de la Cloud Function "diagnose" (Firebase v2)
+// Export de la Cloud Function "diagnose"
 const app = express();
 app.use(cors({ origin: true }));
 app.use(express.json());

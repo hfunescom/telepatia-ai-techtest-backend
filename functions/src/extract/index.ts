@@ -1,4 +1,3 @@
-// functions/src/extract/index.ts
 import { onRequest } from "firebase-functions/v2/https";
 import * as logger from "firebase-functions/logger";
 import { extractService, type ExtractionRequest } from "./service";

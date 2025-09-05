@@ -1,4 +1,3 @@
-// functions/src/transcribe/service.ts
 import OpenAI from "openai";
 import { toFile } from "openai/uploads";
 
@@ -9,7 +8,6 @@ function normalizeLanguage(input?: string): string | undefined {
   return primary || undefined;
 }
 
-/** Entrada admitida por el servicio (URL o Base64) */
 export type TranscribeInput =
   | {
       audio: { type: "url"; value: string };
@@ -26,10 +24,8 @@ export type TranscribeInput =
       correlationId?: string;
     };
 
-/** Salida del servicio */
 export type TranscribeResult = { text: string; language: string, correlationId?: string };
 
-/** Servicio puro reutilizable por handler HTTP y por el pipeline */
 export async function transcribeService(input: TranscribeInput): Promise<TranscribeResult> {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {

@@ -1,15 +1,13 @@
-// functions/src/transcribe/index.ts
 import { onRequest } from "firebase-functions/v2/https";
 import { defineSecret } from "firebase-functions/params";
 import OpenAI from "openai";
 import { toFile } from "openai/uploads";
-import { transcribeService } from "./service"; // 👈 NUEVO
+import { transcribeService } from "./service";
 
 const OPENAI_API_KEY = defineSecret("OPENAI_API_KEY");
 
-// 👉 Handler que soporta JSON (url/base64) y binario crudo
 export async function transcribeHandler(req: any, res: any): Promise<void> {
-  // CORS
+
   res.set("Access-Control-Allow-Origin", "*");
   res.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
   res.set("Access-Control-Allow-Methods", "POST, OPTIONS");
@@ -19,7 +17,6 @@ export async function transcribeHandler(req: any, res: any): Promise<void> {
 
   const ct = String(req.headers["content-type"] || "");
 
-  // --- MODO JSON: contrato inicial ---
   if (ct.includes("application/json")) {
     let body: any = req.body;
 
@@ -55,7 +52,6 @@ export async function transcribeHandler(req: any, res: any): Promise<void> {
     }
   }
 
-  // --- Fallback: binario crudo ---
   const raw = req.body as Buffer;
   if (!raw || !Buffer.isBuffer(raw) || raw.length === 0) {
     res.status(400).json({ error: "Body vacío; envía JSON con audio.url/base64 o audio binario con --data-binary" });

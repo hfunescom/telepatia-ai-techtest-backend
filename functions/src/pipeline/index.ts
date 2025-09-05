@@ -1,4 +1,3 @@
-// functions/src/pipeline/index.ts
 import { onRequest } from "firebase-functions/v2/https";
 import { defineSecret } from "firebase-functions/params";
 import express, { Request, Response } from "express";
@@ -9,11 +8,9 @@ import { transcribeService, type TranscribeInput } from "../transcribe/service";
 import { extractService, type ExtractionResponseData } from "../extract/service";
 import { diagnoseService } from "../diagnose/service";
 
-// -------- Secrets (para despliegue / emulador con .secret.local) --------
 const OPENAI_API_KEY = defineSecret("OPENAI_API_KEY");
 const GEMINI_API_KEY = defineSecret("GEMINI_API_KEY");
 
-// -------- Schemas de entrada --------
 const TextInputSchema = z.object({
   text: z.string().min(1, "text debe ser no vacío"),
   language: z.string().default("es-AR").optional(),
@@ -41,7 +38,6 @@ const PipelineBodySchema = z.object({
 });
 type PipelineBody = z.infer<typeof PipelineBodySchema>;
 
-// -------- App Express --------
 const app = express();
 app.use(cors({ origin: true }));
 app.use(express.json({ limit: "20mb" }));
@@ -54,7 +50,7 @@ function primaryLang(locale: string | undefined): string {
 }
 
 app.post("/", async (req: Request, res: Response) => {
-  // --- Validación body ---
+  
   const parsed = PipelineBodySchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({
@@ -81,7 +77,7 @@ app.post("/", async (req: Request, res: Response) => {
       language = input.language ?? "es-AR";
       correlationId = input.correlationId ?? `corr-${Date.now()}`;
     } else {
-      // audio → transcribe
+      
       const trInput: TranscribeInput =
         input.audio.type === "url"
           ? {
@@ -106,7 +102,6 @@ app.post("/", async (req: Request, res: Response) => {
           .json({ ok: false, step: "transcribe", error: "Transcription sin texto" });
       }
       transcript = tr.text;
-      // preferimos language provisto, si no el de transcribe, si no default
       language = input.language ?? tr.language ?? "es-AR";
       correlationId = input.correlationId ?? `corr-${Date.now()}`;
     }
@@ -150,7 +145,6 @@ app.post("/", async (req: Request, res: Response) => {
     });
     const diagnoseMs = elapsed(t3);
 
-    // ---- Respuesta OK ----
     return res.status(200).json({
       ok: true,
       pipeline: {
@@ -168,7 +162,6 @@ app.post("/", async (req: Request, res: Response) => {
       provider: options?.provider ?? process.env.PROVIDER ?? "gemini",
     });
   } catch (e: any) {
-    // Capturamos error con step desconocido (si querés, podés refinar try/catch por step)
     return res.status(500).json({
       ok: false,
       step: "unknown",
@@ -177,7 +170,6 @@ app.post("/", async (req: Request, res: Response) => {
   }
 });
 
-// 405 para otros métodos/rutas
 app.use((_req: Request, res: Response) => {
   res.status(405).json({ ok: false, error: "Usa POST /" });
 });

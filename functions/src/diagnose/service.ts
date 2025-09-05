@@ -20,7 +20,7 @@ export const ExtractionSchema = z.object({
 });
 
 export const DiagnoseRequestSchema = z.object({
-  extraction: ExtractionSchema, // obligatorio
+  extraction: ExtractionSchema,
   language: z.string().optional().default("es-AR"),
   correlationId: z.string().optional(),
 });
@@ -138,15 +138,14 @@ async function generateDiagnosisJSON(opts: {
   return callGeminiJSON(opts);
 }
 
-// ---------------- Servicio público ----------------
+
 export async function diagnoseService(input: DiagnoseRequest): Promise<LlmOutput> {
-  // Validación de entrada (zod)
+
   const parsed = DiagnoseRequestSchema.parse(input);
   const { system, user } = buildPrompt(parsed);
 
   const raw = await generateDiagnosisJSON({ system, user });
 
-  // Parse robusto del JSON (limpiando ``` si el modelo los añade)
   let json: unknown;
   try {
     json = JSON.parse(raw);
@@ -155,10 +154,8 @@ export async function diagnoseService(input: DiagnoseRequest): Promise<LlmOutput
     json = JSON.parse(cleaned);
   }
 
-  // Validar contra el esquema de salida
   const llmOut = LlmOutputSchema.parse(json);
 
-  // Normalizar defaults (por si el modelo omite arrays)
   return {
     summary: llmOut.summary,
     differentials: llmOut.differentials ?? [],

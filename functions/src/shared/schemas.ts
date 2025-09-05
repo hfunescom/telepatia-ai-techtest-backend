@@ -1,11 +1,8 @@
-// functions/src/shared/schemas.ts
 import { z } from "zod";
 
-// ——— Comunes ———
 export const LanguageSchema = z.string().min(2).max(10).optional();
 export const CorrelationIdSchema = z.string().min(1).optional();
 
-// ——— transcribe ———
 const AudioSchema = z.object({
   type: z.enum(["url", "base64"]),
   value: z.string().min(1)
@@ -27,7 +24,6 @@ export const TranscribeOutputSchema = z.object({
 });
 export type TranscribeOutput = z.infer<typeof TranscribeOutputSchema>;
 
-// ——— extract ———
 export const ExtractInputSchema = z.object({
   transcript: z.string().min(1),
   language: LanguageSchema,
@@ -52,7 +48,6 @@ export type Extraction = z.infer<typeof ExtractionSchema>;
 export const ExtractOutputSchema = ExtractionSchema;
 export type ExtractOutput = z.infer<typeof ExtractOutputSchema>;
 
-// ——— diagnose ———
 export const DiagnoseInputSchema = z.object({
   extraction: ExtractionSchema,
   language: LanguageSchema,
