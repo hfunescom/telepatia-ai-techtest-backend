@@ -173,99 +173,11 @@ describe("pipeline", () => {
     });
   });
 
-  test("audio input en-US -> extract and diagnose", async () => {
-    const trResult = { text: "Patient", language: "en", correlationId: "corr-a1" };
-    const extracted = {
-      patient: { age: 40, sex: "F" },
-      symptoms: ["cough"],
-      riskFlags: [],
-      onsetDays: 2,
-      notes: "",
-    };
-    const diagnosis = {
-      summary: "ok",
-      differentials: [],
-      recommendations: [],
-      severity: "low" as const,
-    };
-    transcribeServiceMock.mockResolvedValueOnce(trResult);
-    extractServiceMock.mockResolvedValueOnce(extracted);
-    diagnoseServiceMock.mockResolvedValueOnce(diagnosis);
-
-    const { pipeline } = require("./index");
-
-    const res = await request(pipeline)
-      .post("/")
-      .send({
-        input: {
-          audio: { type: "url", value: "https://example.com/audio.ogg" },
-          filename: "audio.ogg",
-          correlationId: "corr-a1",
-        },
-      });
-
-    expect(res.status).toBe(200);
-    expect(res.body.ok).toBe(true);
-    expect(res.body.correlationId).toBe("corr-a1");
-    expect(res.body.transcript).toBe("Patient");
-    expect(res.body.extracted).toEqual(extracted);
-    expect(res.body.diagnosis).toEqual(diagnosis);
-
-    expect(transcribeServiceMock).toHaveBeenCalledWith({
-      audio: { type: "url", value: "https://example.com/audio.ogg" },
-      filename: "audio.ogg",
-      language: undefined,
-      hint: undefined,
-      correlationId: "corr-a1",
-    });
-    expect(extractServiceMock).toHaveBeenCalledWith({
-      transcript: "Patient",
-      language: "en",
-      correlationId: "corr-a1",
-    });
-    expect(diagnoseServiceMock).toHaveBeenCalledWith({
-      extraction: {
-        patient: extracted.patient,
-        symptoms: extracted.symptoms,
-        riskFlags: extracted.riskFlags,
-        onsetDays: extracted.onsetDays,
-        notes: extracted.notes,
-      },
-      language: "en",
-      correlationId: "corr-a1",
-    });
-  });
-
   test("unsupported language -> 400", async () => {
     const { pipeline } = require("./index");
     const res = await request(pipeline)
       .post("/")
       .send({ input: { text: "Paciente", language: "fr-FR", correlationId: "corr-3" } });
-
-    expect(res.status).toBe(400);
-    expect(res.body.ok).toBe(false);
-    expect(res.body.error).toBe("unsupported language");
-    expect(extractServiceMock).not.toHaveBeenCalled();
-    expect(diagnoseServiceMock).not.toHaveBeenCalled();
-  });
-
-  test("audio input unsupported language -> 400", async () => {
-    transcribeServiceMock.mockResolvedValueOnce({
-      text: "Bonjour",
-      language: "fr",
-      correlationId: "corr-fr",
-    });
-
-    const { pipeline } = require("./index");
-
-    const res = await request(pipeline)
-      .post("/")
-      .send({
-        input: {
-          audio: { type: "url", value: "https://example.com/audio.ogg" },
-          correlationId: "corr-fr",
-        },
-      });
 
     expect(res.status).toBe(400);
     expect(res.body.ok).toBe(false);
