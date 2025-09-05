@@ -19,12 +19,6 @@ jest.mock("openai", () => {
 
 describe("extract (HTTP Function)", () => {
   const originalEnv = process.env;
-  const prompt =
-    "Eres un asistente de extracción clínica. Extrae SOLO los campos solicitados. " +
-    "No inventes datos. Si algo no está, omítelo. Devuelve JSON válido que cumpla con el schema. " +
-    "Usa claves EXACTAS del schema en inglés (patient, symptoms, onsetDays, riskFlags, notes, sex, age). " +
-    "Mantén los valores de texto en el mismo idioma del texto de entrada. " +
-    "No envíes texto fuera del JSON.";
 
   beforeEach(() => {
     jest.resetModules();
@@ -32,7 +26,6 @@ describe("extract (HTTP Function)", () => {
       ...originalEnv,
       OPENAI_API_KEY: "test-key",
       OPENAI_MODEL: "gpt-4o-mini",
-      LLM_EXTRACT_PROMPT: prompt,
     };
     mockCreate.mockReset();
   });
