@@ -76,6 +76,54 @@ describe("pipeline", () => {
     });
   });
 
+  test("text input -> extract and diagnose sin datos de paciente", async () => {
+    const extracted = {
+      symptoms: ["dolor"],
+      riskFlags: [],
+      onsetDays: 1,
+      notes: "",
+    };
+    const diagnosis = {
+      summary: "ok",
+      differentials: [],
+      recommendations: [],
+      severity: "low" as const,
+    };
+    extractServiceMock.mockResolvedValueOnce(extracted);
+    diagnoseServiceMock.mockResolvedValueOnce(diagnosis);
+
+    const { pipeline } = require("./index");
+
+    const res = await request(pipeline)
+      .post("/")
+      .send({ input: { text: "Paciente", language: "es-AR", correlationId: "corr-2" } });
+
+    expect(res.status).toBe(200);
+    expect(res.body.ok).toBe(true);
+    expect(res.body.correlationId).toBe("corr-2");
+    expect(res.body.transcript).toBe("Paciente");
+    expect(res.body.extracted).toEqual(extracted);
+    expect(res.body.diagnosis).toEqual(diagnosis);
+
+    expect(transcribeServiceMock).not.toHaveBeenCalled();
+    expect(extractServiceMock).toHaveBeenCalledWith({
+      transcript: "Paciente",
+      language: "es-AR",
+      correlationId: "corr-2",
+    });
+    expect(diagnoseServiceMock).toHaveBeenCalledWith({
+      extraction: {
+        patient: undefined,
+        symptoms: extracted.symptoms,
+        riskFlags: extracted.riskFlags,
+        onsetDays: extracted.onsetDays,
+        notes: extracted.notes,
+      },
+      language: "es-AR",
+      correlationId: "corr-2",
+    });
+  });
+
   test("invalid body -> 400", async () => {
     const { pipeline } = require("./index");
     const res = await request(pipeline).post("/").send({ foo: "bar" });

@@ -87,15 +87,23 @@ function normalizeExtractionData(raw: any): any {
 
   if (out.paciente && !out.patient) out.patient = out.paciente;
 
-  if (out.patient && typeof out.patient === "object") {
-    const p = { ...out.patient };
+  if (out.patient == null || typeof out.patient !== "object") {
+    // Si el modelo devolvió null u otro tipo inválido, lo removemos
+    delete out.patient;
+  } else {
+    const p: any = { ...out.patient };
     if (p.genero && !p.sex) p.sex = p.genero;
     if (p.sexo && !p.sex) p.sex = p.sexo;
     if (typeof p.age === "string") {
       const num = Number(p.age);
       if (!Number.isNaN(num)) p.age = num;
+      else delete p.age;
     }
-    out.patient = p;
+    if (p.age == null || Number.isNaN(p.age)) delete p.age;
+    if (typeof p.sex === "string") p.sex = p.sex.toUpperCase();
+    if (p.sex == null || !["M", "F", "X"].includes(p.sex)) delete p.sex;
+    if (Object.keys(p).length > 0) out.patient = p;
+    else delete out.patient;
   }
 
   if (typeof out.symptoms === "string") out.symptoms = [out.symptoms];
