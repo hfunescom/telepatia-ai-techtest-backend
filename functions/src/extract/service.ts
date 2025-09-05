@@ -2,6 +2,8 @@
 import Ajv, { JSONSchemaType } from "ajv";
 import addFormats from "ajv-formats";
 import OpenAI from "openai";
+import { readFileSync } from "fs";
+import path from "path";
 
 export interface ExtractionRequest {
   transcript: string;
@@ -75,6 +77,11 @@ addFormats(ajv);
 const validateRequest = ajv.compile(requestSchema);
 const validateData = ajv.compile(dataSchema as any);
 
+const systemPrompt = readFileSync(
+  path.resolve(__dirname, "../../prompts/llm_extract_prompt.md"),
+  "utf8"
+);
+
 
 function normalizeExtractionData(raw: any): any {
   if (raw == null || typeof raw !== "object") return raw;
@@ -121,8 +128,7 @@ async function extractWithLLM(
   const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
   const openai = new OpenAI({ apiKey });
 
-  const system = process.env.LLM_EXTRACT_PROMPT;
-  if (!system) throw new Error("LLM_EXTRACT_PROMPT no está seteada");
+  const system = systemPrompt;
 
   const user =
     `Texto clínico (lang=${language || "es-AR"}):\n\n${transcript}\n\n` +
