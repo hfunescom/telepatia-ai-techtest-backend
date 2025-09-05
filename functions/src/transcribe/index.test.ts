@@ -37,14 +37,14 @@ describe("transcribe (contrato JSON + raw fallback)", () => {
   });
 
   // ---------- JSON inválido ----------
-  it("JSON inválido → 400 (falta audio.type/value)", async () => {
+  it("Invalid JSON → 400 (missing audio.type/value)", async () => {
     const app = buildJsonApp();
     const res = await request(app)
       .post("/")
       .set("Content-Type", "application/json")
       .send({ audio: { type: "url" } }); // falta value
     expect(res.status).toBe(400);
-    expect(res.body.error).toMatch(/JSON inválido/i);
+    expect(res.body.error).toMatch(/Invalid JSON/i);
   });
 
   // ---------- JSON con URL ----------
@@ -94,14 +94,14 @@ describe("transcribe (contrato JSON + raw fallback)", () => {
   });
 
   // ---------- RAW vacío ----------
-  it("Raw vacío → 400", async () => {
+  it("Empty raw body → 400", async () => {
     const app = buildJsonApp();
     const res = await request(app)
       .post("/")
       .set("Content-Type", "audio/ogg")
       .send(); // sin body
     expect(res.status).toBe(400);
-    expect(res.body.error).toMatch(/Body vacío/i);
+    expect(res.body.error).toMatch(/Empty body/i);
   });
 
   // ---------- RAW feliz ----------
@@ -117,14 +117,14 @@ describe("transcribe (contrato JSON + raw fallback)", () => {
   });
 
   // ---------- Error proveedor ----------
-  it("Error en proveedor → 500", async () => {
-    createMock.mockRejectedValueOnce(new Error("Falla simulada"));
+  it("Provider error → 500", async () => {
+    createMock.mockRejectedValueOnce(new Error("Simulated failure"));
     const app = buildJsonApp();
     const res = await request(app)
       .post("/")
       .set("Content-Type", "audio/ogg")
       .send(Buffer.from("FAKE"));
     expect(res.status).toBe(500);
-    expect(res.body.error).toMatch(/Falla simulada|Error procesando/i);
+    expect(res.body.error).toMatch(/Simulated failure|Error processing/i);
   });
 });

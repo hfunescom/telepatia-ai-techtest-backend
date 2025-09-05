@@ -12,7 +12,7 @@ const OPENAI_API_KEY = defineSecret("OPENAI_API_KEY");
 const GEMINI_API_KEY = defineSecret("GEMINI_API_KEY");
 
 const TextInputSchema = z.object({
-  text: z.string().min(1, "text debe ser no vacío"),
+  text: z.string().min(1, "text must be non-empty"),
   language: z.string().default("es-AR").optional(),
   correlationId: z.string().default(() => `corr-${Date.now()}`).optional(),
 });
@@ -56,7 +56,7 @@ app.post("/", async (req: Request, res: Response) => {
     return res.status(400).json({
       ok: false,
       step: "validation",
-      error: "Body inválido",
+      error: "Invalid body",
       details: parsed.error.issues,
     });
   }
@@ -99,7 +99,7 @@ app.post("/", async (req: Request, res: Response) => {
       if (!tr?.text) {
         return res
           .status(500)
-          .json({ ok: false, step: "transcribe", error: "Transcription sin texto" });
+          .json({ ok: false, step: "transcribe", error: "Transcription has no text" });
       }
       transcript = tr.text;
       language = input.language ?? tr.language ?? "es-AR";
@@ -165,13 +165,13 @@ app.post("/", async (req: Request, res: Response) => {
     return res.status(500).json({
       ok: false,
       step: "unknown",
-      error: e?.message ?? "Error inesperado",
+      error: e?.message ?? "Unexpected error",
     });
   }
 });
 
 app.use((_req: Request, res: Response) => {
-  res.status(405).json({ ok: false, error: "Usa POST /" });
+  res.status(405).json({ ok: false, error: "Use POST /" });
 });
 
 // -------- Export Cloud Function --------

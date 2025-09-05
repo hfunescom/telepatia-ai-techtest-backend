@@ -40,7 +40,7 @@ export async function transcribeService(input: TranscribeInput): Promise<Transcr
 
   if (input.audio.type === "url") {
     const r = await fetch(input.audio.value);
-    if (!r.ok) throw new Error(`No se pudo descargar el audio: ${r.status}`);
+    if (!r.ok) throw new Error(`Failed to download audio: ${r.status}`);
     const ab = await r.arrayBuffer();
     buf = Buffer.from(ab);
     mime = r.headers.get("content-type") || "application/octet-stream";
@@ -59,7 +59,7 @@ export async function transcribeService(input: TranscribeInput): Promise<Transcr
     if (m) mime = m[1];
   }
 
-  if (!buf || buf.length === 0) throw new Error("Audio vacío o inválido");
+  if (!buf || buf.length === 0) throw new Error("Empty or invalid audio");
 
   const uploadable = await toFile(buf, filename, { type: mime });
   const language = normalizeLanguage(input.language);

@@ -124,7 +124,7 @@ async function extractWithLLM(
   language?: string
 ): Promise<ExtractionResponseData> {
   const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) throw new Error("OPENAI_API_KEY no está seteada");
+  if (!apiKey) throw new Error("OPENAI_API_KEY is not set");
   const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
   const openai = new OpenAI({ apiKey });
 
@@ -152,20 +152,20 @@ async function extractWithLLM(
   });
 
   const content = completion.choices?.[0]?.message?.content;
-  if (!content) throw new Error("LLM devolvió contenido vacío");
+  if (!content) throw new Error("LLM returned empty content");
 
   let parsed: unknown;
   try {
     parsed = JSON.parse(content);
   } catch {
-    throw new Error("LLM no devolvió JSON válido");
+    throw new Error("LLM did not return valid JSON");
   }
 
   const normalized = normalizeExtractionData(parsed);
 
   if (!validateData(normalized)) {
     const errs = JSON.stringify(validateData.errors ?? [], null, 2);
-    throw new Error(`LLM no cumple el schema de extracción: ${errs}`);
+    throw new Error(`LLM output does not match extraction schema: ${errs}`);
   }
 
   const data = normalized as ExtractionResponseData;
@@ -183,7 +183,7 @@ export async function extractService(
   const ok = validateRequest(input);
   if (!ok) {
     throw new Error(
-      "Bad request en extractService: " + JSON.stringify(validateRequest.errors ?? [])
+      "Bad request in extractService: " + JSON.stringify(validateRequest.errors ?? [])
     );
   }
 
