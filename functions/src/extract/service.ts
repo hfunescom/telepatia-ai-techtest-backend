@@ -3,25 +3,23 @@ import Ajv, { JSONSchemaType } from "ajv";
 import addFormats from "ajv-formats";
 import OpenAI from "openai";
 
-/** ---------------- Types ---------------- */
 export interface ExtractionRequest {
   transcript: string;
-  language: string;       // <- ahora requerido
-  correlationId: string;  // <- ahora requerido
+  language: string;
+  correlationId: string;
 }
 
 export interface ExtractionResponseData {
   patient?: {
-    age?: number; // 0..130
+    age?: number;
     sex?: "M" | "F" | "X";
   };
-  symptoms?: string[];       // [] allowed
-  onsetDays?: number;        // >= 0
-  riskFlags?: string[];      // [] allowed
+  symptoms?: string[];
+  onsetDays?: number;
+  riskFlags?: string[];
   notes?: string;
 }
 
-/** --------------- JSON Schemas --------------- */
 const requestSchema: JSONSchemaType<ExtractionRequest> = {
   $schema: "http://json-schema.org/draft-07/schema#",
   title: "ExtractionRequest",
@@ -31,7 +29,7 @@ const requestSchema: JSONSchemaType<ExtractionRequest> = {
     language: { type: "string" },
     correlationId: { type: "string" },
   },
-  required: ["transcript", "language", "correlationId"], // <- lo que pediste
+  required: ["transcript", "language", "correlationId"],
   additionalProperties: false,
 };
 
@@ -52,13 +50,13 @@ const dataSchema = {
     symptoms: {
       type: "array",
       items: { type: "string" },
-      default: [], // <- usaremos useDefaults para que se aplique
+      default: [],
     },
     onsetDays: { type: "integer", minimum: 0 },
     riskFlags: {
       type: "array",
       items: { type: "string" },
-      default: [], // <- idem
+      default: [],
     },
     notes: { type: "string" },
   },
@@ -66,27 +64,23 @@ const dataSchema = {
   additionalProperties: false,
 } as const;
 
-/** --------------- Validators --------------- */
-// Más tolerante: defaults + quitar props extra del LLM + coerción
 const ajv = new Ajv({
   allErrors: true,
   strict: false,
   coerceTypes: true,
-  useDefaults: true,            // aplica defaults de schema
-  removeAdditional: "all",      // borra props no declaradas
+  useDefaults: true,
+  removeAdditional: "all",
 });
 addFormats(ajv);
 const validateRequest = ajv.compile(requestSchema);
 const validateData = ajv.compile(dataSchema as any);
 
-/** --------------- Normalización de salida del LLM --------------- */
-// Acepta variaciones típicas del LLM (claves en ES, alias, etc.)
+
 function normalizeExtractionData(raw: any): any {
   if (raw == null || typeof raw !== "object") return raw;
 
   const out: any = { ...raw };
 
-  // Mapear claves en español/comunes a las del schema
   if (out.sintomas && !out.symptoms) out.symptoms = out.sintomas;
   if (out.riesgos && !out.riskFlags) out.riskFlags = out.riesgos;
   if (out.observaciones && !out.notes) out.notes = out.observaciones;
@@ -104,14 +98,12 @@ function normalizeExtractionData(raw: any): any {
     out.patient = p;
   }
 
-  // Asegurar arrays si vinieron como string/objeto accidentalmente
   if (typeof out.symptoms === "string") out.symptoms = [out.symptoms];
   if (typeof out.riskFlags === "string") out.riskFlags = [out.riskFlags];
 
   return out;
 }
 
-/** --------------- LLM call + validation --------------- */
 async function extractWithLLM(
   transcript: string,
   language?: string
@@ -158,18 +150,15 @@ async function extractWithLLM(
     throw new Error("LLM no devolvió JSON válido");
   }
 
-  // Normalizamos ANTES de validar (para aceptar variantes razonables)
   const normalized = normalizeExtractionData(parsed);
 
   if (!validateData(normalized)) {
-    // Arrojar errores visibles para debug rápido
     const errs = JSON.stringify(validateData.errors ?? [], null, 2);
     throw new Error(`LLM no cumple el schema de extracción: ${errs}`);
   }
 
   const data = normalized as ExtractionResponseData;
 
-  // Defaults finales garantizados (por si el LLM no los puso)
   return {
     symptoms: [],
     riskFlags: [],
@@ -177,13 +166,11 @@ async function extractWithLLM(
   };
 }
 
-/** --------------- Servicio público --------------- */
 export async function extractService(
   input: ExtractionRequest
 ): Promise<ExtractionResponseData> {
   const ok = validateRequest(input);
   if (!ok) {
-    // si falla request, devolvemos explicación con detalles
     throw new Error(
       "Bad request en extractService: " + JSON.stringify(validateRequest.errors ?? [])
     );
