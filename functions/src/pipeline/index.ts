@@ -26,7 +26,7 @@ const AudioInputSchema = z.object({
     value: z.string().min(1),
   }),
   filename: z.string().optional(),
-  language: z.string().default("es-AR").optional(),
+  language: z.string().optional(),
   hint: z.string().optional(),
   correlationId: z.string().default(() => `corr-${Date.now()}`).optional(),
 });
@@ -106,19 +106,17 @@ app.post("/", async (req: Request, res: Response) => {
           .json({ ok: false, step: "transcribe", error: "Transcription sin texto" });
       }
       transcript = tr.text;
-      // preferimos language provisto, si no el de transcribe, si no default
-      language = input.language ?? tr.language ?? "es-AR";
+      // preferimos language detectado, luego el provisto
+      language = tr.language ?? input.language;
       correlationId = input.correlationId ?? `corr-${Date.now()}`;
     }
 
     const transcribeMs = elapsed(t1);
 
-    // Normalizamos para tipos estrictos que requiere extract
-    const lang: string = language ?? "es-AR";
     const corrId: string = correlationId ?? `corr-${Date.now()}`;
-
+    const lang = language;
     const primary = primaryLang(lang);
-    if (!SUPPORTED_LANGS.includes(primary as any)) {
+    if (!lang || !SUPPORTED_LANGS.includes(primary as any)) {
       return res
         .status(400)
         .json({ ok: false, error: "unsupported language", correlationId: corrId });
