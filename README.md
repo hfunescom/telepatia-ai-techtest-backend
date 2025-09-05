@@ -4,7 +4,7 @@ Telepatia technical test backend based on Firebase Functions. The functions use 
 
 ## Components Diagram
 
-![Components Diagram](components-diagram.svg)
+![Components Diagram](components-diagram.png)
 
 ## Requirements
 - Node.js 22
