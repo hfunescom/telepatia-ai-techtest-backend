@@ -48,6 +48,11 @@ app.use(express.json({ limit: "20mb" }));
 
 const elapsed = (t0: number) => Date.now() - t0;
 
+const SUPPORTED_LANGS = ["es", "en"] as const;
+function primaryLang(locale: string | undefined): string {
+  return locale?.split("-")[0]?.toLowerCase() || "";
+}
+
 app.post("/", async (req: Request, res: Response) => {
   // --- Validación body ---
   const parsed = PipelineBodySchema.safeParse(req.body);
@@ -111,6 +116,13 @@ app.post("/", async (req: Request, res: Response) => {
     // Normalizamos para tipos estrictos que requiere extract
     const lang: string = language ?? "es-AR";
     const corrId: string = correlationId ?? `corr-${Date.now()}`;
+
+    const primary = primaryLang(lang);
+    if (!SUPPORTED_LANGS.includes(primary as any)) {
+      return res
+        .status(400)
+        .json({ ok: false, error: "unsupported language", correlationId: corrId });
+    }
 
     // ---- Step 2: extract ----
     const t2 = Date.now();
