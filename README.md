@@ -2,6 +2,10 @@
 
 Telepatia technical test backend based on Firebase Functions. The functions use OpenAI and Gemini models to transcribe audio, extract information, and suggest preliminary diagnoses.
 
+## Components Diagram
+
+![Components Diagram](components-diagram.svg)
+
 ## Requirements
 - Node.js 22
 - [Firebase CLI](https://firebase.google.com/docs/cli) installed globally
