@@ -27,7 +27,7 @@ export async function transcribeHandler(req: any, res: any): Promise<void> {
     }
 
     if (!body || !body.audio || !body.audio.type || !body.audio.value) {
-      res.status(400).json({ error: "JSON inválido: se espera audio: { type: 'url'|'base64', value: '...' }" });
+      res.status(400).json({ error: "Invalid JSON: expected audio: { type: 'url'|'base64', value: '...' }" });
       return;
     }
 
@@ -46,7 +46,8 @@ export async function transcribeHandler(req: any, res: any): Promise<void> {
       });
       return;
     } catch (e: any) {
-      const msg = e?.response?.data?.error?.message || e?.message || "Error procesando transcripción";
+      const msg =
+        e?.response?.data?.error?.message || e?.message || "Error processing transcription";
       res.status(500).json({ error: msg });
       return;
     }
@@ -54,7 +55,7 @@ export async function transcribeHandler(req: any, res: any): Promise<void> {
 
   const raw = req.body as Buffer;
   if (!raw || !Buffer.isBuffer(raw) || raw.length === 0) {
-    res.status(400).json({ error: "Body vacío; envía JSON con audio.url/base64 o audio binario con --data-binary" });
+    res.status(400).json({ error: "Empty body; send JSON with audio.url/base64 or binary audio with --data-binary" });
     return;
   }
 
@@ -71,7 +72,8 @@ export async function transcribeHandler(req: any, res: any): Promise<void> {
     res.json({ text: out.text });
     return;
   } catch (e: any) {
-    const msg = e?.response?.data?.error?.message || e?.message || "Error procesando transcripción";
+    const msg =
+      e?.response?.data?.error?.message || e?.message || "Error processing transcription";
     res.status(500).json({ error: msg });
     return;
   }
