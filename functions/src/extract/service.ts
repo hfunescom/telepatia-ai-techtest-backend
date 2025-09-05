@@ -99,9 +99,9 @@ function normalizeExtractionData(raw: any): any {
       if (!Number.isNaN(num)) p.age = num;
       else delete p.age;
     }
-    if (p.age == null || Number.isNaN(p.age)) delete p.age;
+    if (p.age == null || Number.isNaN(p.age) || p.age === 0) delete p.age;
     if (typeof p.sex === "string") p.sex = p.sex.toUpperCase();
-    if (p.sex == null || !["M", "F", "X"].includes(p.sex)) delete p.sex;
+    if (p.sex == null || !["M", "F"].includes(p.sex)) delete p.sex;
     if (Object.keys(p).length > 0) out.patient = p;
     else delete out.patient;
   }

@@ -116,6 +116,39 @@ describe("extract (HTTP Function)", () => {
     expect(mockCreate).toHaveBeenCalledTimes(1);
   });
 
+  test("200 OK - LLM devuelve edad 0 y sexo X", async () => {
+    const llmData = {
+      patient: { age: 0, sex: "X" },
+      symptoms: ["tos"],
+    };
+
+    mockCreate.mockResolvedValueOnce({
+      choices: [
+        { message: { content: JSON.stringify(llmData) } }
+      ]
+    });
+
+    const app = buildApp();
+
+    const res = await request(app)
+      .post("/")
+      .send({
+        transcript: "Paciente consulta por tos",
+        language: "es-AR",
+        correlationId: "sin-edad-sex",
+      })
+      .set("Content-Type", "application/json");
+
+    expect(res.status).toBe(200);
+    expect(res.body.ok).toBe(true);
+    expect(res.body.correlationId).toBe("sin-edad-sex");
+    expect(res.body.data).toEqual({
+      symptoms: ["tos"],
+      riskFlags: [],
+    });
+    expect(mockCreate).toHaveBeenCalledTimes(1);
+  });
+
   test("500 INTERNAL_ERROR - body incompleto", async () => {
     const app = buildApp();
 
