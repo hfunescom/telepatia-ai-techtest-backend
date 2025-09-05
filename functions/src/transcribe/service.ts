@@ -72,13 +72,16 @@ export async function transcribeService(input: TranscribeInput): Promise<Transcr
   const out = await client.audio.transcriptions.create({
     model: "whisper-1",
     file: uploadable,
-    language,
+    ...(language ? { language } : {}),
     prompt: hint,
-  });
+    response_format: "verbose_json",
+  } as any);
+
+  const detected = normalizeLanguage((out as any).language);
 
   return {
     text: out.text,
-    language: language || "es",
+    language: detected || language || "",
     correlationId: input.correlationId,
   };
 }
