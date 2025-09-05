@@ -1,4 +1,4 @@
-# telepatia-ai-techtest-backend
+# Telepatia AI Techtest Backend
 
 Telepatia technical test backend based on Firebase Functions. The functions use OpenAI and Gemini models to transcribe audio, extract information, and suggest preliminary diagnoses.
 
